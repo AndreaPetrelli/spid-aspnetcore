@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,10 +9,13 @@ using Microsoft.Extensions.Hosting;
 using SPID.AspNetCore.Authentication;
 using SPID.AspNetCore.Authentication.Events;
 using SPID.AspNetCore.Authentication.Helpers;
+using SPID.AspNetCore.Authentication.Identity;
 using SPID.AspNetCore.Authentication.Models;
+using SPID.AspNetCore.Authentication.Saml;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
@@ -42,6 +46,7 @@ namespace SPID.AspNetCore.WebApp
                 })
                 .AddCookie();
             services.AddScoped<CustomSpidEvents>();
+            services.AddScoped<ISpidClaimsPrincipalFactory, CustomSpidClaimsPrincipalFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -83,5 +88,18 @@ namespace SPID.AspNetCore.WebApp
                 return base.TokenCreating(context);
             }
         }
+
+        public class CustomSpidClaimsPrincipalFactory : SpidClaimsPrincipalFactory
+        {
+            public CustomSpidClaimsPrincipalFactory(IServiceProvider serviceProvider)
+            {
+                
+            }
+
+            public override Task<ClaimsPrincipal> CreateAsync(AuthenticationScheme scheme, ResponseType response)
+            {
+                return base.CreateAsync(scheme, response);
+            }
+        }         
     }
 }

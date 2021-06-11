@@ -225,24 +225,24 @@ namespace SPID.AspNetCore.Authentication.Saml
 
             var listAttribute = new List<string>
             {
-                SamlConst.fiscalNumber,
-                SamlConst.digitalAddress,
-                SamlConst.name,
-                SamlConst.familyName,
-                SamlConst.email,
-                SamlConst.address,
-                SamlConst.companyName,
-                SamlConst.countyOfBirth,
-                SamlConst.dateOfBirth,
-                SamlConst.expirationDate,
-                SamlConst.fiscalNumber,
-                SamlConst.gender,
-                SamlConst.idCard,
-                SamlConst.ivaCode,
-                SamlConst.mobilePhone,
-                SamlConst.placeOfBirth,
-                SamlConst.registeredOffice,
-                SamlConst.spidCode,
+                SamlAttributes.FiscalNumber,
+                SamlAttributes.DigitalAddress,
+                SamlAttributes.Name,
+                SamlAttributes.FamilyName,
+                SamlAttributes.Email,
+                SamlAttributes.Address,
+                SamlAttributes.CompanyName,
+                SamlAttributes.CountyOfBirth,
+                SamlAttributes.DateOfBirth,
+                SamlAttributes.ExpirationDate,
+                SamlAttributes.FiscalNumber,
+                SamlAttributes.Gender,
+                SamlAttributes.IdCard,
+                SamlAttributes.IvaCode,
+                SamlAttributes.MobilePhone,
+                SamlAttributes.PlaceOfBirth,
+                SamlAttributes.RegisteredOffice,
+                SamlAttributes.SpidCode,
             };
 
             var attribute = response.GetAssertion().GetAttributeStatement().GetAttributes();
@@ -255,9 +255,9 @@ namespace SPID.AspNetCore.Authentication.Saml
             }
             else
             {
-                listAttribute.Add(SamlConst.firstname);
-                listAttribute.Add(SamlConst.surname);
-                listAttribute.Add(SamlConst.mail);
+                listAttribute.Add(SamlAttributes.FirstName);
+                listAttribute.Add(SamlAttributes.Surname);
+                listAttribute.Add(SamlAttributes.Mail);
                 attributeNames.AddRange(attribute.Where(x => !string.IsNullOrWhiteSpace(x.FriendlyName)).Select(x => x.FriendlyName).ToList());
                 BusinessValidation.ValidationCondition(() => attributeNames.Count() == 0, ErrorLocalization.AttributeRequiredNotFound);
                 if (attributeNames.Count() > 0)

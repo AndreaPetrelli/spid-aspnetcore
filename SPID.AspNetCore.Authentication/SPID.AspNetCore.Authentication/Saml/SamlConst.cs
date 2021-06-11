@@ -22,26 +22,5 @@
         public static string Saml2Assertion = "urn:oasis:names:tc:SAML:2.0:assertion";
         public static string SpidL = "https://www.spid.gov.it/SpidL";
         public static string Method = "urn:oasis:names:tc:SAML:2.0:cm:bearer";
-        public static string name = nameof(name);
-        public static string familyName = nameof(familyName);
-        public static string fiscalNumber = nameof(fiscalNumber);
-        public static string email = nameof(email);
-        public static string digitalAddress = nameof(digitalAddress);
-        public static string mail = nameof(mail);
-        public static string surname = nameof(surname);
-        public static string firstname = nameof(firstname);
-        public static string address = nameof(address);
-        public static string companyName = nameof(companyName);
-        public static string countyOfBirth = nameof(countyOfBirth);
-        public static string dateOfBirth = nameof(dateOfBirth);
-        public static string expirationDate = nameof(expirationDate);
-        public static string gender = nameof(gender);
-        public static string idCard = nameof(idCard);
-        public static string ivaCode = nameof(ivaCode);
-        public static string mobilePhone = nameof(mobilePhone);
-        public static string placeOfBirth = nameof(placeOfBirth);
-        public static string registeredOffice = nameof(registeredOffice);
-        public static string spidCode = nameof(spidCode);
-
     }
 }

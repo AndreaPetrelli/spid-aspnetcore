@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using SPID.AspNetCore.Authentication.Helpers;
+using SPID.AspNetCore.Authentication.Identity;
 using SPID.AspNetCore.Authentication.Models;
 using System;
 
@@ -59,6 +60,7 @@ namespace SPID.AspNetCore.Authentication
                 var urlHelperFactory = factory.GetService<IUrlHelperFactory>();
                 return urlHelperFactory.GetUrlHelper(actionContext);
             });
+            builder.Services.TryAddScoped<ISpidClaimsPrincipalFactory, SpidClaimsPrincipalFactory>();
             builder.Services.AddOptions<SpidConfiguration>().Configure(o => OptionsHelper.LoadFromConfiguration(o, configuration));
             return builder.AddRemoteScheme<SpidOptions, SpidHandler>(authenticationScheme, displayName, configureOptions);
         }
