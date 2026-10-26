@@ -20,9 +20,11 @@ namespace SPID.AspNetCore.Authentication.Helpers
             BusinessValidation.ValidationNotNullNotWhitespace(certFilePath, new SpidException(ErrorLocalization.GenericMessage, ErrorLocalization.CertificatePathNullOrEmpty, SpidErrorCode.CertificatePathNullOrEmpty));
             BusinessValidation.ValidationNotNullNotWhitespace(certPassword, new SpidException(ErrorLocalization.GenericMessage, ErrorLocalization.CertificatePasswordNullOrEmpty, SpidErrorCode.CertificatePasswordNullOrEmpty));
 
-            return new X509Certificate2(certFilePath,
-                certPassword,
-                X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+            return X509Certificate2.GetCertContentType(certFilePath) == X509ContentType.Pkcs12
+                ? X509CertificateLoader.LoadPkcs12FromFile(certFilePath,
+                    certPassword,
+                    X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable)
+                : X509CertificateLoader.LoadCertificateFromFile(certFilePath);
         }
 
         /// <summary>
@@ -36,8 +38,10 @@ namespace SPID.AspNetCore.Authentication.Helpers
             BusinessValidation.ValidationNotNullNotWhitespace(certificateString64, new SpidException(ErrorLocalization.GenericMessage, ErrorLocalization.CertificateRawStringNullOrEmpty, SpidErrorCode.CertificateRawStringNullOrEmpty));
             BusinessValidation.ValidationNotNullNotWhitespace(certPassword, new SpidException(ErrorLocalization.GenericMessage, ErrorLocalization.CertificatePasswordNullOrEmpty, SpidErrorCode.CertificatePasswordNullOrEmpty));
             var certificateBytes = Convert.FromBase64String(certificateString64);
-            return new X509Certificate2(certificateBytes, certPassword,
-                X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+            return X509Certificate2.GetCertContentType(certificateBytes) == X509ContentType.Pkcs12
+                ? X509CertificateLoader.LoadPkcs12(certificateBytes, certPassword,
+                    X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable)
+                : X509CertificateLoader.LoadCertificate(certificateBytes);
         }
 
 

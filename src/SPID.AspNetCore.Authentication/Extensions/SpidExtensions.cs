@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,12 +58,15 @@ namespace SPID.AspNetCore.Authentication
         public static AuthenticationBuilder AddSpid(this AuthenticationBuilder builder, string authenticationScheme, string displayName, Action<SpidOptions> configureOptions)
         {
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IPostConfigureOptions<SpidOptions>, SpidPostConfigureOptions>());
-            builder.Services.TryAdd(ServiceDescriptor.Singleton<IActionContextAccessor, ActionContextAccessor>());
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddHttpClient("spid");
             builder.Services.TryAddScoped(factory =>
             {
-                var actionContext = factory.GetService<IActionContextAccessor>().ActionContext;
-                var urlHelperFactory = factory.GetService<IUrlHelperFactory>();
+                var context = factory.GetRequiredService<IHttpContextAccessor>().HttpContext
+                    ?? throw new InvalidOperationException("URL generation requires an active HTTP request.");
+                var action = context.GetEndpoint()?.Metadata.GetMetadata<ActionDescriptor>() ?? new ActionDescriptor();
+                var actionContext = new ActionContext(context, context.GetRouteData(), action);
+                var urlHelperFactory = factory.GetRequiredService<IUrlHelperFactory>();
                 return urlHelperFactory.GetUrlHelper(actionContext);
             });
             builder.Services.AddOptions<SpidOptions>().Configure(configureOptions);

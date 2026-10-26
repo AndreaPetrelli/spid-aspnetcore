@@ -1,4 +1,5 @@
-﻿using SPID.AspNetCore.Authentication.Exceptions;
+﻿#nullable enable annotations
+using SPID.AspNetCore.Authentication.Exceptions;
 using SPID.AspNetCore.Authentication.Models;
 using SPID.AspNetCore.Authentication.Resources;
 using System;
@@ -92,7 +93,11 @@ namespace SPID.AspNetCore.Authentication.Helpers
                 if (identityProvider is not null)
                 {
                     return identityProvider.X509SigningCertificates
-                        .Any(certificate => VerifyAllSignatures(signedDocument, signatureNodes, new X509Certificate2(Convert.FromBase64String(certificate))));
+                        .Any(certificate =>
+                        {
+                            using var publicCertificate = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(certificate));
+                            return VerifyAllSignatures(signedDocument, signatureNodes, publicCertificate);
+                        });
                 }
                 else
                 {

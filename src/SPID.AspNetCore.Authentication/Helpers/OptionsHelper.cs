@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿#nullable enable annotations
+using Microsoft.Extensions.Configuration;
 using SPID.AspNetCore.Authentication.Models;
 using System;
 using System.Linq;

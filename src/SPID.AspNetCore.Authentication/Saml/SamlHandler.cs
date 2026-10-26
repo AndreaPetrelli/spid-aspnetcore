@@ -342,7 +342,6 @@ namespace SPID.AspNetCore.Authentication.Saml
             BusinessValidation.ValidationNotNullNotWhitespace(response.GetAssertion().ID, new SpidException(ErrorLocalization.GenericMessage, string.Format(ErrorLocalization.Missing, ErrorFields.ID), SpidErrorCode.AssertionIdNonSpec));
             BusinessValidation.ValidationCondition(() => response.GetAssertion().Version != SamlConst.Version, new SpidException(ErrorLocalization.GenericMessage, string.Format(ErrorLocalization.DifferentFrom, ErrorFields.Version, SamlConst.Version), SpidErrorCode.AssertionVersionNoDue));
 
-            BusinessValidation.ValidationCondition(() => response.GetAssertion().IssueInstant == null, new SpidException(ErrorLocalization.GenericMessage, string.Format(ErrorLocalization.NotSpecified, ErrorFields.IssueInstant), SpidErrorCode.AssertionIssueInstantNonSpec));
             DateTimeOffset assertionIssueIstant = response.GetAssertion().IssueInstant;
 
             BusinessValidation.ValidationCondition(() => assertionIssueIstant > issueIstantRequest.AddMinutes(10), new SpidException(ErrorLocalization.GenericMessage, ErrorLocalization.IssueIstantAssertionGreaterThanRequest, SpidErrorCode.AssertionIssueInstantPostRequest));
@@ -371,7 +370,6 @@ namespace SPID.AspNetCore.Authentication.Saml
             BusinessValidation.ValidationNotNullNotWhitespace(response.GetAssertion().Subject.GetSubjectConfirmation().SubjectConfirmationData.InResponseTo, new SpidException(ErrorLocalization.GenericMessage, string.Format(ErrorLocalization.Missing, ErrorFields.InResponseTo), SpidErrorCode.AssertionSubjectConfDataInResponseToMancante));
             BusinessValidation.ValidationCondition(() => !response.GetAssertion().Subject.GetSubjectConfirmation().SubjectConfirmationData.InResponseTo.Equals(request.ID), new SpidException(ErrorLocalization.GenericMessage, string.Format(ErrorLocalization.ParameterNotValid, ErrorFields.InResponseTo), SpidErrorCode.AssertionSubjectConfDataInResponseToDiversoIDReq));
 
-            BusinessValidation.ValidationCondition(() => response.GetAssertion().Subject.GetSubjectConfirmation().SubjectConfirmationData.NotOnOrAfter == null, new SpidException(ErrorLocalization.GenericMessage, string.Format(ErrorLocalization.NotSpecified, "Assertion.SubjectConfirmationData.NotOnOrAfter"), SpidErrorCode.AssertionSubjectConfDataNotOnOrAfterNonSpec));
             BusinessValidation.ValidationCondition(() => response.GetAssertion().Subject.GetSubjectConfirmation().SubjectConfirmationData.NotOnOrAfter == DateTime.MinValue, new SpidException(ErrorLocalization.GenericMessage, string.Format(ErrorLocalization.Missing, "Assertion.SubjectConfirmationData.NotOnOrAfter"), SpidErrorCode.AssertionSubjectConfDataNotOnOrAfterMancante));
             DateTimeOffset notOnOrAfter = new DateTimeOffset(response.GetAssertion().Subject.GetSubjectConfirmation().SubjectConfirmationData.NotOnOrAfter);
             BusinessValidation.ValidationCondition(() => notOnOrAfter < DateTimeOffset.UtcNow, new SpidException(ErrorLocalization.GenericMessage, ErrorLocalization.NotOnOrAfterLessThenRequest, SpidErrorCode.AssertionSubjectConfDataNotOnOrAfterPreResp));

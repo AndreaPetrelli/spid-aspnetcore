@@ -28,10 +28,9 @@ namespace SPID.AspNetCore.Authentication
     internal class SpidHandler(IOptionsMonitor<SpidOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
-            ISystemClock clock,
             IHttpClientFactory httpClientFactory,
             ILogHandler logHandler)
-        : RemoteAuthenticationHandler<SpidOptions>(options, logger, encoder, clock), IAuthenticationSignOutHandler
+        : RemoteAuthenticationHandler<SpidOptions>(options, logger, encoder), IAuthenticationSignOutHandler
     {
         EventsHandler _eventsHandler;
         RequestHandler _requestGenerator;
