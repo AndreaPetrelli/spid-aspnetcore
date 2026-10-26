@@ -120,33 +120,36 @@ namespace SPID.AspNetCore.Authentication.Models
         /// </value>
         public ushort AttributeConsumingServiceIndex { get; set; }
 
-        private static List<IdentityProvider> cachedIdentityProviders = new List<IdentityProvider>();
-        static readonly SemaphoreSlim cachedIdentityProvidersSemaphore = new SemaphoreSlim(1, 1);
-        private static DateTime cachedIdentityProvidersLastCheck = DateTime.MinValue;
+        private List<IdentityProvider> cachedIdentityProviders;
+        private readonly SemaphoreSlim cachedIdentityProvidersSemaphore = new(1, 1);
+        private DateTimeOffset cachedIdentityProvidersExpires;
+        private string cachedRegistryUrl;
 
-        /// <summary>
-        /// Gets the identity providers.
-        /// </summary>
-        /// <value>
-        /// The identity providers.
-        /// </value>
-        public async Task<IEnumerable<IdentityProvider>> GetIdentityProviders(IHttpClientFactory httpClientFactory)
+        public Task<IEnumerable<IdentityProvider>> GetIdentityProviders(IHttpClientFactory httpClientFactory) =>
+            GetIdentityProviders(httpClientFactory, CancellationToken.None);
+
+        public async Task<IEnumerable<IdentityProvider>> GetIdentityProviders(IHttpClientFactory httpClientFactory, CancellationToken cancellationToken)
         {
-            List<IdentityProvider> result = _identityProviders;
+            cancellationToken.ThrowIfCancellationRequested();
+            var registryUrl = IdPRegistryURL;
+            // Never append remote providers to the configured provider collection.
+            var result = new List<IdentityProvider>(_identityProviders);
+            List<IdentityProvider> remote;
             if (CacheIdpMetadata)
             {
-                await cachedIdentityProvidersSemaphore.WaitAsync();
+                await cachedIdentityProvidersSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    if (cachedIdentityProvidersLastCheck < DateTime.UtcNow.AddMinutes(-IdpMetadataCacheDurationInMinutes))
+                    var clock = TimeProvider ?? System.TimeProvider.System;
+                    if (cachedIdentityProviders == null || cachedRegistryUrl != registryUrl || cachedIdentityProvidersExpires <= clock.GetUtcNow())
                     {
-                        var client = httpClientFactory.CreateClient(nameof(SpidOptions));
-                        cachedIdentityProviders = await FetchIdentityProvidersFromRegistry(client);
-                        cachedIdentityProvidersLastCheck = DateTime.UtcNow;
+                        using var client = httpClientFactory.CreateClient("spid");
+                        var downloaded = await FetchIdentityProvidersFromRegistry(client, registryUrl, cancellationToken).ConfigureAwait(false);
+                        cachedIdentityProviders = downloaded;
+                        cachedRegistryUrl = registryUrl;
+                        cachedIdentityProvidersExpires = clock.GetUtcNow().AddMinutes(IdpMetadataCacheDurationInMinutes);
                     }
-                    result.AddRange(RandomIdentityProvidersOrder
-                            ? cachedIdentityProviders.OrderBy(x => Guid.NewGuid()).ToList()
-                            : cachedIdentityProviders.ToList());
+                    remote = new List<IdentityProvider>(cachedIdentityProviders);
                 }
                 finally
                 {
@@ -155,21 +158,20 @@ namespace SPID.AspNetCore.Authentication.Models
             }
             else
             {
-                var client = httpClientFactory.CreateClient(nameof(SpidOptions));
-                result.AddRange(await FetchIdentityProvidersFromRegistry(client));
+                using var client = httpClientFactory.CreateClient("spid");
+                remote = await FetchIdentityProvidersFromRegistry(client, registryUrl, cancellationToken).ConfigureAwait(false);
             }
-
+            result.AddRange(RandomIdentityProvidersOrder ? remote.OrderBy(_ => Guid.NewGuid()) : remote);
             if (!IsLocalValidatorEnabled)
                 result = result.Where(c => c.ProviderType != ProviderType.DevelopmentProvider).ToList();
-
             if (!IsStagingValidatorEnabled)
                 result = result.Where(c => c.ProviderType != ProviderType.StagingProvider).ToList();
             return result;
         }
 
-        private async Task<List<IdentityProvider>> FetchIdentityProvidersFromRegistry(HttpClient client)
+        private async Task<List<IdentityProvider>> FetchIdentityProvidersFromRegistry(HttpClient client, string registryUrl, CancellationToken cancellationToken)
         {
-            var json = await client.GetStringAsync(IdPRegistryURL);
+            var json = await SamlInput.ReadMetadataAsync(client, registryUrl, cancellationToken).ConfigureAwait(false);
             if (!string.IsNullOrWhiteSpace(json))
             {
                 var registryItems = JsonSerializer.Deserialize<List<IdPRegistryName>>(json);

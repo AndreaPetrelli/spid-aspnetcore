@@ -91,7 +91,7 @@ namespace SPID.AspNetCore.Authentication
 
             // Select the Identity Provider
             var idpName = Request.Query["idpName"];
-            var idp = (await Options.GetIdentityProviders(httpClientFactory)).FirstOrDefault(x => x.Name == idpName);
+            var idp = (await Options.GetIdentityProviders(httpClientFactory, Context.RequestAborted)).FirstOrDefault(x => x.Name == idpName);
 
 
             var securityTokenCreatingContext = await _eventsHandler.HandleSecurityTokenCreatingContext(Context,
@@ -289,7 +289,7 @@ namespace SPID.AspNetCore.Authentication
                 return HandleRequestResult.Fail("Unsolicited logins are not allowed.");
             }
 
-            var idp = (await Options.GetIdentityProviders(httpClientFactory)).FirstOrDefault(x => x.Name == idpName);
+            var idp = (await Options.GetIdentityProviders(httpClientFactory, Context.RequestAborted)).FirstOrDefault(x => x.Name == idpName);
 
             response.ValidateAuthnResponse(request, idp, serializedResponse);
             return null;
@@ -384,9 +384,9 @@ namespace SPID.AspNetCore.Authentication
               && Request.ContentType.StartsWith("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
               && Request.Body.CanRead)
             {
-                var form = await Request.ReadFormAsync();
+                var form = await Request.ReadFormAsync(Context.RequestAborted);
 
-                var serializedResponse = Encoding.UTF8.GetString(Convert.FromBase64String(form["SAMLResponse"].FirstOrDefault()));
+                var serializedResponse = SamlInput.DecodePost(form["SAMLResponse"].Single());
 
                 await logHandler.LogPostResponse(new PostResponse()
                 {
@@ -409,7 +409,7 @@ namespace SPID.AspNetCore.Authentication
                 && Request.Query.ContainsKey("SAMLResponse")
                 && Request.Query.ContainsKey("RelayState"))
             {
-                var serializedResponse = DecompressString(Request.Query["SAMLResponse"].FirstOrDefault());
+                var serializedResponse = SamlInput.DecodeRedirect(Request.Query["SAMLResponse"].Single());
 
                 await logHandler.LogRedirectResponse(new RedirectResponse()
                 {

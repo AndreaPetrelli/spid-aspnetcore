@@ -91,7 +91,7 @@ namespace SPID.AspNetCore.Authentication
             IEnumerable<IdentityProvider> idps = new List<IdentityProvider>();
             try
             {
-                idps = await _options.GetIdentityProviders(_httpClientFactory);
+                idps = await _options.GetIdentityProviders(_httpClientFactory, _urlHelper.ActionContext.HttpContext.RequestAborted);
             }
             catch (Exception ex)
             {
